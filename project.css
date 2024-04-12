@@ -1,3 +1,12 @@
+/* Main title */
+.title {
+    text-align: center;
+    margin-top: 0px;
+    font-size: 14px;
+    font-family: "Roboto", sans-serif;
+    
+}
+
 /* Main scatter plot, clustering. Edit for the circles */
 .dot {
     stroke: #000000;
