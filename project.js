@@ -1,8 +1,22 @@
 // Set up the margin, width, and height for the main visualization SVG
 var margin = { top: 10, right: 30, bottom: 30, left: 40 },
-    width = 960 - margin.left - margin.right,
+    width = 900 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
+// Append a div to the body to contain the title
+var titleDiv = d3.select("body").insert("div", ":first-child") 
+        .attr("class", "title");
+
+// Add the title text
+titleDiv.append("h1") 
+        .text("Modern Portfolio Optimizator") 
+
+// Calculate the title's height
+var titleHeight = document.querySelector('.title').offsetHeight;
+
+// Now add this titleHeight to the top position of your SVG elements
+var distance_to_add_to_absolute_svg = margin.top + titleHeight + 18; 
+        
 // Define the 'zoomed' function that updates positions and sizes of elements based on the zoom level
 function zoomed() {
     // Calculate new scales based on the zoom event
@@ -21,8 +35,18 @@ var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .call(d3.zoom().on("zoom", zoomed))
+    .on("dblclick.zoom", null)  // Disable double-click zoom
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+svg.append("text")
+    .attr("id", "instruction-text")
+    .attr("class", "inner-title") 
+    .attr("x", width / 2) 
+    .attr("y", margin.top) 
+    .attr("text-anchor", "middle") 
+    .style("font-size", "16px") 
+    .text("Scroll though scatter plot and select your stocks by clicking on the circles");
 
 // Define the x and y scales for the scatter plot
 var xScale = d3.scaleLinear()
@@ -49,7 +73,7 @@ var detailSvg = d3.select("body").append("svg")
     .attr("height", detailHeight + 10)
     .style("position", "absolute")
     .style("left", `${width + margin.left + margin.right + 30}px`)
-    .style("top", margin.top);
+    .style("top", margin.top + distance_to_add_to_absolute_svg );
 
 // Define a clip path to hide overflow in the detail SVG
 detailSvg.append("defs").append("clipPath")
@@ -68,7 +92,7 @@ var returnSvg = d3.select("body").append("svg")
     .attr("height", detailHeight - 210)
     .style("position", "absolute")
     .style("left", `${width + margin.left + margin.right + detailWidth + 50}px`)
-    .style("top", margin.top);
+    .style("top", margin.top + distance_to_add_to_absolute_svg);
 var returnGroup = returnSvg.append("g");
 
 
@@ -78,7 +102,7 @@ var normalCurveSvg = d3.select("body").append("svg")
     .attr("height", 200) // Define a fixed height for the SVG.
     .style("position", "absolute") // Use absolute positioning to place the SVG correctly in the layout.
     .style("left", `${width + margin.left + margin.right + detailWidth + 50}px`) // Position horizontally.
-    .style("top", `${margin.top + detailHeight + margin.bottom - 220}px`); // Position vertically.
+    .style("top", `${margin.top + detailHeight + margin.bottom - 220 + distance_to_add_to_absolute_svg}px`); // Position vertically.
 
 // Create a group within the SVG to hold the curve and its elements.
 var normalCurveGroup = normalCurveSvg.append("g")
@@ -170,7 +194,7 @@ var scatterPlotSvg = d3.select("body").append("svg")
     .attr("height", scatterPlotHeight)
     .style("position", "absolute")  // Positioning to place it in the correct location on the page.
     .style("left", `${width + margin.left + margin.right + 30}px`)  // Align horizontally with other elements.
-    .style("top", `${margin.top + detailHeight + 30}px`);  // Position below the normal curve SVG.
+    .style("top", `${margin.top + detailHeight + 30 + distance_to_add_to_absolute_svg}px`);  // Position below the normal curve SVG.
 
 // Define the x and y scales for the scatter plot. The domain is based on expected data ranges, and the range is based on SVG dimensions.
 var xScaleScatter = d3.scaleLinear()
@@ -186,7 +210,7 @@ scatterPlotSvg.append("text")
     .attr("class", "axis-label")  // Class for styling the label.
     .attr("transform", `translate(${scatterPlotWidth / 2}, ${scatterPlotHeight - margin.bottom + 27})`)
     .style("text-anchor", "middle")  // Center the text.
-    .text("Volatility");  // Label text.
+    .text("Volatility %");  // Label text.
 
 // Add and style the y-axis label for the scatter plot.
 scatterPlotSvg.append("text")
@@ -196,7 +220,7 @@ scatterPlotSvg.append("text")
     .attr("x", 0 - (scatterPlotHeight / 2))  // Positioning along the x-axis.
     .attr("dy", "1em")  // Adjust the position along the y-axis.
     .style("text-anchor", "middle")  // Center the text.
-    .text("Return");  // Label text.
+    .text("Return %");  // Label text.
 
 // Append and position the x-axis on the scatter plot SVG.
 scatterPlotSvg.append("g")
@@ -222,10 +246,42 @@ function isEfficient(point, allPoints) {
     });
 }
 
+// Initialize the tooltip
+var scatterPlotTooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0)
+    .style("position", "absolute")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "1px")
+    .style("border-radius", "5px")
+    .style("padding", "10px");
+
+// Function to show and update the tooltip
+function showScatterPlotTooltip(d, x, y) {
+    scatterPlotTooltip.transition()
+        .duration(200)
+        .style("opacity", 0.9);
+
+    // Construct a string that lists each stock with its count
+    var tooltipContent = "Stocks:<br>" + d.stocks.map(stock => `${stock.symbol}: ${stock.count}`).join("<br>");
+
+    scatterPlotTooltip.html(tooltipContent)
+        .style("left", x + "px")
+        .style("top", y + "px");
+
+}
+function hideScatterPlotTooltip() {
+    scatterPlotTooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
+}
+
 // Define a function to update the scatter plot whenever a new data point is added or the data changes.
-function updateScatterPlot(volatility, returnVal) {
+function updateScatterPlot(volatility, returnVal, associatedStocks) {
     // Construct a new point object and add it to the array of all points
-    var newPoint = { volatility: volatility, returnVal: returnVal };
+    var newPoint = { volatility: volatility, returnVal: returnVal, stocks: associatedStocks };
+    console.log(newPoint)
     allPoints.push(newPoint);
     
     // Re-evaluate the efficiency of all points after adding the new point
@@ -246,7 +302,15 @@ function updateScatterPlot(volatility, returnVal) {
         })
         .attr("cx", function(d) { return xScaleScatter(d.volatility); }) // Set the x-position based on volatility
         .attr("cy", function(d) { return yScaleScatter(d.returnVal); }) // Set the y-position based on return
-        .attr("r", 4); // Set the radius of the circle
+        .attr("r", 4) // Set the radius of the circle
+        .on("mouseover", function(d) {
+            var x = d3.event.pageX;
+            var y = d3.event.pageY;
+            showScatterPlotTooltip(d, x, y);
+        })
+        .on("mouseout", function(d) {
+            hideScatterPlotTooltip();
+        });
     
     // Use the exit selection to remove circles that no longer correspond to data points
     circles.exit().remove();
@@ -257,7 +321,7 @@ var recordButton = d3.select("body").append("button")
     .text("Record Point") // Set the button text
     .style("position", "absolute") // Position the button absolutely for layout control
     .style("left", `${width + margin.left + margin.right + 30}px`) // Set the left position
-    .style("top", `${margin.top + detailHeight + scatterPlotHeight + 50}px`); // Set the top position
+    .style("top", `${margin.top + detailHeight + scatterPlotHeight + 50 + distance_to_add_to_absolute_svg}px`); // Set the top position
 
 // Initialize variables for tracking the translation (scrolling/panning) of the detail SVG
 var currentTranslation = 0;
@@ -334,6 +398,12 @@ Promise.all([
         });
 
     circles.on("click", function (d) {
+            // Check for the first selection
+        if (d3.select("#instruction-text").empty() === false) {
+            // Remove the instruction text
+            d3.select("#instruction-text").remove();
+        }
+
         if (d3.event.ctrlKey || d3.event.metaKey) {
             d.selectionCount = 0;
         } else {
@@ -495,7 +565,9 @@ Promise.all([
         var selectedData = data.filter(d => d.selectionCount > 0);
         var portfolioReturn = calculatePortfolioReturn(selectedData, stockData) * 100;
         var volatilityResults = calculatePortfolioVolatility(selectedData, stockData);
-        updateScatterPlot(volatilityResults.portfolioVolatility, portfolioReturn);
+        var associatedStocks = selectedData.map(d => ({symbol: d.Symbol, count: d.selectionCount}));
+
+        updateScatterPlot(volatilityResults.portfolioVolatility, portfolioReturn, associatedStocks);
     
         // Reset selections
         data.forEach(function(d) {
