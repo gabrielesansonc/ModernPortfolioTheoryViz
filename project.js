@@ -264,8 +264,7 @@ function showScatterPlotTooltip(d, x, y) {
         .style("opacity", 0.9);
 
     // Construct a string that lists each stock with its count
-    var tooltipContent = "Stocks:<br>" + d.stocks.map(stock => `${stock.symbol}: ${stock.count}`).join("<br>");
-
+    var tooltipContent = '(Ret: '+ d.returnVal.toFixed(2) + '%, Vol: ' + d.volatility + '%)<br>' + "Stocks:<br>" + d.stocks.map(stock => `${stock.symbol}: ${stock.count}`).join("<br>");
     scatterPlotTooltip.html(tooltipContent)
         .style("left", x + "px")
         .style("top", y + "px");
@@ -281,7 +280,6 @@ function hideScatterPlotTooltip() {
 function updateScatterPlot(volatility, returnVal, associatedStocks) {
     // Construct a new point object and add it to the array of all points
     var newPoint = { volatility: volatility, returnVal: returnVal, stocks: associatedStocks };
-    console.log(newPoint)
     allPoints.push(newPoint);
     
     // Re-evaluate the efficiency of all points after adding the new point
