@@ -31,7 +31,13 @@ function Loyalty() {
   // console.log(selectedBrands)
 
   const continueClick = () => {
-    navigate('/visualization')
+    var userBrands = []
+    for (const [, value] of Object.entries(selectedBrands)) {
+      value.forEach((brand) => {
+        userBrands.push(brand.value)
+      })
+    }
+    navigate('/visualization', { state: userBrands})
   }
 
   const skipClick = () => {

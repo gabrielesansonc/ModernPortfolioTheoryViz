@@ -30,7 +30,7 @@ const MultiSelectDropdown = ({ data, setDataset }) => {
             options={data
               .filter(item => item.Category === category)
               .map(item => ({
-                value: item.Combined,
+                value: item.Symbol,
                 label: item.Combined,
               }))
             }

@@ -15,7 +15,8 @@
     background-color: white;
     border: 4px lightblue solid;
     border-radius: 10px;
-    width: 15%
+    width: 15%;
+    color: black
 }
 
 .Button:hover {
