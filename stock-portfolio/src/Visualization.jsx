@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router'
 import * as d3 from 'd3'
 import * as ss from 'simple-statistics'
-import styles from './Visualization.module.css'
+import './Visualization.module.css'
 
 function Visualization () {
     
-    const [userBrands, setBrands] = useState(null)
-    const [showBrands, setShowBrands] = useState(false)
+    const showBrands = useRef(false)
     const initialized = useRef(false)
+    const firstSelection = useRef(true)
 
     const location = useLocation()
     const brandData = location.state
@@ -19,17 +19,15 @@ function Visualization () {
             initialized.current = true
 
             if(brandData != null) {
-                setBrands(brandData)
-                setShowBrands(true)
+                showBrands.current = true
             }
 
-            var titleDiv = d3.select("body").insert("div", ":first-child") 
+            var titleDiv = d3.select("#d3-container").insert("div", ":first-child") 
             .attr("class", "title")
             .style("text-align", "center")
 
             titleDiv.append("h1") 
-                .text("Modern Portfolio Optimizator")
-
+                .text("Modern Portfolio Optimizer")
 
             var margin = { top: 10, right: 30, bottom: 30, left: 40 },
             width = 900 - margin.left - margin.right,
@@ -46,12 +44,14 @@ function Visualization () {
                 .domain([-30, 30])
                 .range([height, 0]);
 
-            var svg = d3.select("body").append("svg")
+            var svg = d3.select("#d3-container").append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .call(d3.zoom().on("zoom", zoomed))
                 .on("dblclick.zoom", null)
                 .style("margin-left", "1%")
+                .style("position", "absolute")
+                .style("top", margin.top + distance_to_add_to_absolute_svg )
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
             
@@ -69,7 +69,7 @@ function Visualization () {
                     .domain([0, 1e12])
                     .range([1, 9]);
 
-            var tooltip = d3.select("body").append("div")
+            var tooltip = d3.select("#d3-container").append("div")
                 .attr("class", "tooltip")
                 .style("opacity", 0)
                 .style("position", "absolute")
@@ -84,7 +84,7 @@ function Visualization () {
 
             var detailWidth = 150;
             var detailHeight = height - 200;
-            var detailSvg = d3.select("body").append("svg")
+            var detailSvg = d3.select("#d3-container").append("svg")
                 .attr("width", detailWidth)
                 .attr("height", detailHeight + 10)
                 .style("position", "absolute")
@@ -100,7 +100,7 @@ function Visualization () {
             var detailGroup = detailSvg.append("g")
                 .attr("clip-path", "url(#clip-detail-view)");
             
-            var returnSvg = d3.select("body").append("svg")
+            var returnSvg = d3.select("#d3-container").append("svg")
                 .attr("width", 200)
                 .attr("height", detailHeight - 210)
                 .style("position", "absolute")
@@ -108,7 +108,7 @@ function Visualization () {
                 .style("top", margin.top + distance_to_add_to_absolute_svg);
             var returnGroup = returnSvg.append("g");
 
-            var normalCurveSvg = d3.select("body").append("svg")
+            var normalCurveSvg = d3.select("#d3-container").append("svg")
                 .attr("width", 200) 
                 .attr("height", 200) 
                 .style("position", "absolute") 
@@ -121,7 +121,7 @@ function Visualization () {
             var scatterPlotWidth = detailWidth + 220;
             var scatterPlotHeight = 207;
 
-            var scatterPlotSvg = d3.select("body").append("svg")
+            var scatterPlotSvg = d3.select("#d3-container").append("svg")
                 .attr("width", scatterPlotWidth)
                 .attr("height", scatterPlotHeight)
                 .style("position", "absolute")  
@@ -173,7 +173,7 @@ function Visualization () {
 
             var allPoints = [];
 
-            var scatterPlotTooltip = d3.select("body").append("div")
+            var scatterPlotTooltip = d3.select("#d3-container").append("div")
                 .attr("class", "tooltip")
                 .style("opacity", 0)
                 .style("position", "absolute")
@@ -186,13 +186,13 @@ function Visualization () {
                 .style("text-align", "center")
                 .style("z-index", 5)
 
-            var recordButton = d3.select("body").append("button")
+            var recordButton = d3.select("#d3-container").append("button")
                 .text("Record Point") // Set the button text
                 .style("position", "absolute") // Position the button absolutely for layout control
                 .style("left", `${width + margin.left + margin.right + 30}px`) // Set the left position
                 .style("top", `${margin.top + detailHeight + scatterPlotHeight + 50 + distance_to_add_to_absolute_svg}px`); // Set the top position
             
-            var brandsButton = d3.select("body").append("button")
+            var brandsButton = d3.select("#d3-container").append("button")
                 .text("Toggle Brand Preferences") // Set the button text
                 .style("position", "absolute") // Position the button absolutely for layout control
                 .style("left", `${width + margin.left + margin.right + 150}px`) // Set the left position
@@ -203,6 +203,29 @@ function Visualization () {
                     } else {
                         return 1
                     }
+                })
+
+            var brandStatus = d3.select("#d3-container").append("button")
+                .text(function() {
+                    if(brandData == null) {
+                        return "Off"
+                    }
+                    return "On"
+                })
+                .style("position", "absolute")
+                .style("left", `${width + margin.left + margin.right + 345}px`)
+                .style("top", `${margin.top + detailHeight + scatterPlotHeight + 50 + distance_to_add_to_absolute_svg}px`)
+                .style("opacity", function() {
+                    if(brandData == null) {
+                        return 0.5
+                    }
+                    return 1
+                })
+                .style("background-color", function() {
+                    if (brandData == null) {
+                        return "lightcoral"
+                    }
+                    return "#4CAF50"
                 })
 
 
@@ -400,11 +423,10 @@ function Visualization () {
                         if (brandData == null) {
                             return 0.5
                         }
-                        // console.log(brandData, circle_symbol)
                         if (brandData.includes(circle_symbol) && brandData != null) {
                             return 1
                         }
-                        return 0.25
+                        return 0.15
                     })
                     .on("mouseover", function (d, event) {
                         tooltip.transition()
@@ -425,16 +447,24 @@ function Visualization () {
                         d3.select("#instruction-text").remove();
                     }
 
+                    if (firstSelection.current) {
+                        scatter.selectAll(".dot").style("opacity", 0.5)
+                        firstSelection.current = false
+                    }
+
+                    showBrands.current = false
+                    brandStatus.style("background-color", "lightcoral")
+                    brandStatus.text("Off")
+
             
                     if (d.ctrlKey || d.metaKey) {
                         event.selectionCount = 0;
                     } else {
                         event.selectionCount++;
                     }
-
             
-                    d3.select(this).classed("selected", d.selectionCount > 0)
-                        .style("opacity", d.selectionCount > 0 ? 1 : 0.5);
+                    d3.select(this).classed("selected", event.selectionCount > 0)
+                        .style("opacity", event.selectionCount > 0 ? 1 : 0.5);
             
                     // Update the details view
                     updateDetailView();
@@ -448,7 +478,6 @@ function Visualization () {
                     return yearlyReturns.length > 0 ? d3.mean(yearlyReturns) : 0;
                 }
                 
-            
                 function calculateAverageReturn(dailyReturns) {
                     return ss.mean(dailyReturns.filter(r => !isNaN(r)));
                 }
@@ -569,6 +598,9 @@ function Visualization () {
             
                 recordButton.on("click", function() {
                     var selectedData = data.filter(d => d.selectionCount > 0);
+                    if (selectedData.length === 0) {
+                        return
+                    }
                     var portfolioReturn = calculatePortfolioReturn(selectedData, stockData) * 100;
                     var volatilityResults = calculatePortfolioVolatility(selectedData, stockData);
                     var associatedStocks = selectedData.map(d => ({symbol: d.Symbol, count: d.selectionCount}));
@@ -583,11 +615,39 @@ function Visualization () {
                         .style("opacity", 0.5);
                 
                     updateDetailView();
+
+                    showBrands.current = false
+                    brandStatus.style("background-color", "lightcoral")
+                    brandStatus.text("Off")
+
+                    firstSelection.current = true
                 });
 
                 brandsButton.on("click", function() {
                     if (brandData != null) {
-                        setShowBrands(currentState => !currentState)
+                        const currentShowBrands = !showBrands.current
+
+                        if (!currentShowBrands) {
+                            if (firstSelection.current) {
+                                scatter.selectAll(".dot").style("opacity", 0.5)
+                            } else {
+                                scatter.selectAll(".dot")
+                                    .style("opacity", 0.5)
+                                scatter.selectAll(".dot")
+                                    .filter(".selected")
+                                    .style("opacity", 1)
+                            }
+                            brandStatus.style("background-color", "lightcoral")
+                            brandStatus.text("Off")
+                        } else {
+                            scatter.selectAll(".dot").style("opacity", function (d) {
+                                const circle_symbol = d.Symbol;
+                                return brandData.includes(circle_symbol) ? 1 : 0.15;
+                            });
+                            brandStatus.style("background-color", "#4CAF50")
+                            brandStatus.text("On")
+                        }
+                        showBrands.current = currentShowBrands
                     }
                 })
             
@@ -597,12 +657,9 @@ function Visualization () {
 
     }, [])
 
-
-
     return (
-        <body>
-
-        </body>
+        <div id="d3-container">
+        </div>
     )
 }
 

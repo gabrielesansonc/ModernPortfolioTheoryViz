@@ -20,6 +20,8 @@ function Loyalty() {
 
   }, [])
 
+  // console.log(data)
+
   const setDataset = (data) => {
     setSelectedBrands(data);
   };
@@ -36,6 +38,9 @@ function Loyalty() {
       value.forEach((brand) => {
         userBrands.push(brand.value)
       })
+    }
+    if (userBrands.length === 0) {
+      userBrands = null
     }
     navigate('/visualization', { state: userBrands})
   }
